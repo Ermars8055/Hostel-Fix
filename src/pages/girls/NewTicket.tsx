@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import Header from '../../components/common/Header';
 import TicketForm, { TicketFormValues } from '../../components/tickets/TicketForm';
 import { API_URL } from '../../config/constants';
 import toast from 'react-hot-toast';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, api } from '../../contexts/AuthContext';
 
 const GirlsNewTicket: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -16,7 +15,6 @@ const GirlsNewTicket: React.FC = () => {
     setLoading(true);
     
     try {
-      const token = localStorage.getItem('token');
       const formData = new FormData();
       
       // Append text fields
@@ -31,9 +29,8 @@ const GirlsNewTicket: React.FC = () => {
         formData.append('image', data.image);
       }
       
-      await axios.post(`${API_URL}/api/tickets`, formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
+      await api.post('/tickets', formData, {
+        headers: {
           'Content-Type': 'multipart/form-data'
         }
       });

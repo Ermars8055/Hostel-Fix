@@ -1,7 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
 type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'boys' | 'girls';
+  hostelName?: string;
+  roomNumber?: string;
+};
+
+type AuthResponse = {
+  token: string;
   _id: string;
   name: string;
   email: string;
@@ -29,36 +40,24 @@ type RegisterData = {
   roomNumber: string;
 };
 
-// Demo users
-const DEMO_USERS = {
-  admin: {
-    _id: '1',
-    name: 'Admin User',
-    email: 'admin@demo.com',
-    password: 'admin123',
-    role: 'admin'
-  },
-  boys: {
-    _id: '2',
-    name: 'John Doe',
-    email: 'boy@demo.com',
-    password: 'student123',
-    role: 'boys',
-    hostelName: 'Boys Hostel 1',
-    roomNumber: 'B101'
-  },
-  girls: {
-    _id: '3',
-    name: 'Jane Smith',
-    email: 'girl@demo.com',
-    password: 'student123',
-    role: 'girls',
-    hostelName: 'Girls Hostel 1',
-    roomNumber: 'G101'
-  }
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Create axios instance with base URL
+const api = axios.create({
+  baseURL: 'http://localhost:5000/api',
+  withCredentials: true
+});
+
+// Add request interceptor to include token in headers
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export { api };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -66,17 +65,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Add response interceptor to handle 401 errors
   useEffect(() => {
-    // Check if token exists
-    const token = localStorage.getItem('token');
-    if (token) {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-        setIsAuthenticated(true);
+    const interceptor = api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          // Clear token and user data
+          localStorage.removeItem('token');
+          setUser(null);
+          setIsAuthenticated(false);
+          // Redirect to login page
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
       }
-    }
-    setLoading(false);
+    );
+
+    return () => {
+      api.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        const response = await api.get('/auth/me');
+        setUser(response.data);
+        setIsAuthenticated(true);
+      } catch (error) {
+        setUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem('token');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -84,30 +116,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Find matching demo user
-      const demoUser = Object.values(DEMO_USERS).find(
-        u => u.email === email && u.password === password
-      );
+      const response = await api.post<AuthResponse>('/auth/login', { email, password });
+      const { token, ...userData } = response.data;
       
-      if (!demoUser) {
-        throw new Error('Invalid credentials');
-      }
-      
-      // Remove password from user object
-      const { password: _, ...userWithoutPassword } = demoUser;
-      
-      // Generate a simple demo token
-      const token = `demo_token_${demoUser._id}_${Date.now()}`;
-      
-      // Store token and user in localStorage
+      // Store token in localStorage
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
       
-      setUser(userWithoutPassword as User);
+      setUser(userData as User);
       setIsAuthenticated(true);
+      toast.success('Login successful');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
-      throw new Error(err.message || 'Login failed');
+      setError(err.response?.data?.message || 'Login failed');
+      toast.error(err.response?.data?.message || 'Login failed');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -118,38 +139,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Create new user object
-      const newUser = {
-        _id: Date.now().toString(),
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        hostelName: userData.hostelName,
-        roomNumber: userData.roomNumber
-      };
+      const response = await api.post<AuthResponse>('/auth/register', userData);
+      const { token, ...rest } = response.data;
       
-      // Generate a simple demo token
-      const token = `demo_token_${newUser._id}_${Date.now()}`;
-      
-      // Store token and user in localStorage
+      // Store token in localStorage
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(newUser));
       
-      setUser(newUser);
+      setUser(rest as User);
       setIsAuthenticated(true);
+      toast.success('Registration successful');
     } catch (err: any) {
-      setError('Registration failed');
-      throw new Error('Registration failed');
+      setError(err.response?.data?.message || 'Registration failed');
+      toast.error(err.response?.data?.message || 'Registration failed');
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    setIsAuthenticated(false);
+  const logout = async () => {
+    try {
+      await api.get('/auth/logout');
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('token');
+      toast.success('Logged out successfully');
+    } catch (err: any) {
+      toast.error('Logout failed');
+    }
   };
 
   return (

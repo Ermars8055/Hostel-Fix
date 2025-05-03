@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { PlusCircle, Clock, CheckCircle, TicketIcon, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import Header from '../../components/common/Header';
 import StatusCard from '../../components/dashboard/StatusCard';
 import TicketCard from '../../components/tickets/TicketCard';
 import { API_URL } from '../../config/constants';
 import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../contexts/AuthContext';
 
 interface Ticket {
   _id: string;
@@ -43,15 +43,9 @@ const BoysDashboard: React.FC = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        
         const [ticketsRes, statsRes] = await Promise.all([
-          axios.get(`${API_URL}/api/tickets/my-tickets`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${API_URL}/api/tickets/my-stats`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          api.get('/tickets/my-tickets'),
+          api.get('/tickets/my-stats')
         ]);
         
         setTickets(ticketsRes.data.slice(0, 3));
