@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { LogIn } from 'lucide-react';
+import { LogIn, Building2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import Background from '../../components/testbg/Background';
 
 type LoginFormValues = {
   email: string;
@@ -47,11 +48,16 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-primary-600 to-primary-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg p-8 animate-fade-in">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Background />
+      
+      <div className="w-full max-w-md relative">
+        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-8 animate-fade-in">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Hostel Fix</h1>
+            <div className="flex items-center justify-center mb-4">
+              <Building2 size={40} className="text-primary-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-neutral-900 mb-2">Hostel Fix</h1>
             <p className="text-neutral-600">Sign in to your account</p>
           </div>
           
@@ -70,7 +76,7 @@ const Login: React.FC = () => {
                     message: 'Invalid email address',
                   },
                 })}
-                className="form-input"
+                className="form-input bg-white/50 backdrop-blur-sm"
                 placeholder="your@example.com"
               />
               {errors.email && <p className="form-error">{errors.email.message}</p>}
@@ -95,7 +101,7 @@ const Login: React.FC = () => {
                     message: 'Password must be at least 6 characters',
                   },
                 })}
-                className="form-input"
+                className="form-input bg-white/50 backdrop-blur-sm"
                 placeholder="••••••••"
               />
               {errors.password && <p className="form-error">{errors.password.message}</p>}
@@ -123,7 +129,7 @@ const Login: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-neutral-600">
               Don't have an account?{' '}
-              <Link to="/register" className="text-primary-600 hover:text-primary-700">
+              <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
                 Register here
               </Link>
             </p>

@@ -1,5 +1,5 @@
 // API URL - Change this to match your server URL (development vs production)
-export const API_URL = 'http://localhost:5000';
+export const API_URL = 'http://localhost:1000';
 
 // Hostel List
 export const HOSTELS = {
