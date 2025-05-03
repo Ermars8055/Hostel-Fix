@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import Header from '../../components/common/Header';
 import TicketForm, { TicketFormValues } from '../../components/tickets/TicketForm';
 import { API_URL } from '../../config/constants';
 import toast from 'react-hot-toast';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, api } from '../../contexts/AuthContext';
 
 const BoysNewTicket: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -16,27 +15,17 @@ const BoysNewTicket: React.FC = () => {
     setLoading(true);
     
     try {
-      const token = localStorage.getItem('token');
-      const formData = new FormData();
+      // Create the ticket data object
+      const ticketData = {
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        hostelName: data.hostelName,
+        roomNumber: data.roomNumber,
+        priority: 'medium' // Default priority
+      };
       
-      // Append text fields
-      formData.append('title', data.title);
-      formData.append('description', data.description);
-      formData.append('category', data.category);
-      formData.append('hostelName', data.hostelName);
-      formData.append('roomNumber', data.roomNumber);
-      
-      // Append image if exists
-      if (data.image) {
-        formData.append('image', data.image);
-      }
-      
-      await axios.post(`${API_URL}/api/tickets`, formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      await api.post('/tickets', ticketData);
       
       toast.success('Ticket submitted successfully');
       navigate('/boys/tickets');
