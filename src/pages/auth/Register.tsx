@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Building2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { HOSTELS } from '../../config/constants';
+import RegisterBackground from '../../components/testbg/RegisterBackground';
 
 type RegisterFormValues = {
   name: string;
@@ -60,12 +61,17 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-primary-600 to-primary-800 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <RegisterBackground />
+      
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg p-8 animate-fade-in">
+        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-8 animate-fade-in">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">Create an Account</h1>
-            <p className="text-neutral-600">Sign up for Hostel Fix</p>
+            <div className="flex items-center justify-center mb-4">
+              <Building2 size={40} className="text-primary-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-neutral-900 mb-2">Hostel Fix</h1>
+            <p className="text-neutral-600">Create your account</p>
           </div>
           
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -83,7 +89,7 @@ const Register: React.FC = () => {
                     message: 'Name must be at least 2 characters',
                   },
                 })}
-                className="form-input"
+                className="form-input bg-white/50 backdrop-blur-sm"
                 placeholder="John Doe"
               />
               {errors.name && <p className="form-error">{errors.name.message}</p>}
@@ -103,7 +109,7 @@ const Register: React.FC = () => {
                     message: 'Invalid email address',
                   },
                 })}
-                className="form-input"
+                className="form-input bg-white/50 backdrop-blur-sm"
                 placeholder="your@example.com"
               />
               {errors.email && <p className="form-error">{errors.email.message}</p>}
@@ -124,7 +130,7 @@ const Register: React.FC = () => {
                       message: 'Password must be at least 6 characters',
                     },
                   })}
-                  className="form-input"
+                  className="form-input bg-white/50 backdrop-blur-sm"
                   placeholder="••••••••"
                 />
                 {errors.password && <p className="form-error">{errors.password.message}</p>}
@@ -141,7 +147,7 @@ const Register: React.FC = () => {
                     required: 'Please confirm your password',
                     validate: (value) => value === password || 'Passwords do not match',
                   })}
-                  className="form-input"
+                  className="form-input bg-white/50 backdrop-blur-sm"
                   placeholder="••••••••"
                 />
                 {errors.confirmPassword && (
@@ -154,10 +160,10 @@ const Register: React.FC = () => {
               <label className="form-label">You are a:</label>
               <div className="grid grid-cols-2 gap-4 mt-1">
                 <label className={`
-                  flex items-center justify-center p-3 border rounded-md cursor-pointer
+                  flex items-center justify-center p-3 border rounded-md cursor-pointer transition-all duration-200
                   ${selectedRole === 'boys' 
-                    ? 'border-primary-500 bg-primary-50 text-primary-700' 
-                    : 'border-neutral-300 text-neutral-700 hover:bg-neutral-50'}
+                    ? 'border-primary-500 bg-primary-50/50 backdrop-blur-sm text-primary-700' 
+                    : 'border-neutral-300 text-neutral-700 hover:bg-neutral-50/50'}
                 `}>
                   <input
                     type="radio"
@@ -170,10 +176,10 @@ const Register: React.FC = () => {
                 </label>
                 
                 <label className={`
-                  flex items-center justify-center p-3 border rounded-md cursor-pointer
+                  flex items-center justify-center p-3 border rounded-md cursor-pointer transition-all duration-200
                   ${selectedRole === 'girls' 
-                    ? 'border-primary-500 bg-primary-50 text-primary-700' 
-                    : 'border-neutral-300 text-neutral-700 hover:bg-neutral-50'}
+                    ? 'border-primary-500 bg-primary-50/50 backdrop-blur-sm text-primary-700' 
+                    : 'border-neutral-300 text-neutral-700 hover:bg-neutral-50/50'}
                 `}>
                   <input
                     type="radio"
@@ -195,7 +201,7 @@ const Register: React.FC = () => {
               <select
                 id="hostelName"
                 {...register('hostelName', { required: 'Hostel is required' })}
-                className="form-input"
+                className="form-input bg-white/50 backdrop-blur-sm"
               >
                 <option value="">Select your hostel</option>
                 {getHostelOptions().map((hostel) => (
@@ -221,7 +227,7 @@ const Register: React.FC = () => {
                     message: 'Enter a valid room number'
                   }
                 })}
-                className="form-input"
+                className="form-input bg-white/50 backdrop-blur-sm"
                 placeholder="E.g., 101, A-204"
               />
               {errors.roomNumber && <p className="form-error">{errors.roomNumber.message}</p>}
@@ -249,7 +255,7 @@ const Register: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-neutral-600">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary-600 hover:text-primary-700">
+              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
                 Sign in
               </Link>
             </p>
