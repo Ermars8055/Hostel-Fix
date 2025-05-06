@@ -11,6 +11,7 @@ import {
   getMyStats
 } from '../controllers/tickets.js';
 import { protect } from '../middleware/auth.js';
+import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ const router = express.Router();
 router.use(protect);
 
 // Create ticket
-router.post('/', createTicket);
+router.post('/', upload.single('image'), createTicket);
 
 // Get all tickets
 router.get('/', getTickets);

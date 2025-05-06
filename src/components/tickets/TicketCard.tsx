@@ -1,22 +1,32 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { Eye, MessageSquare, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Eye, MessageSquare, Clock, CheckCircle, AlertCircle, Image as ImageIcon, Maximize2, User } from 'lucide-react';
 import { TICKET_STATUS } from '../../config/constants';
+import { API_URL } from '../../config/constants';
 
-type TicketCardProps = {
-  ticket: {
-    _id: string;
-    title: string;
-    description: string;
-    status: string;
-    category: string;
+interface Ticket {
+  _id: string;
+  title: string;
+  description: string;
+  status: string;
+  category: string;
+  hostelName: string;
+  roomNumber: string;
+  studentName: string;
+  createdAt: string;
+  imageUrl?: string;
+  updatedAt: string;
+  user: {
+    name: string;
+    email: string;
+    role: string;
     hostelName: string;
     roomNumber: string;
-    studentName: string;
-    createdAt: string;
-    imageUrl?: string;
-    updatedAt: string;
   };
+}
+
+type TicketCardProps = {
+  ticket: Ticket;
   isAdmin?: boolean;
   onStatusChange?: (id: string, status: string) => void;
 };
@@ -56,6 +66,13 @@ const TicketCard: React.FC<TicketCardProps> = ({
     }
   };
 
+  // Get the full image URL
+  const getImageUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${API_URL}${url}`;
+  };
+
   return (
     <div className="card hover:shadow-md transition-shadow mb-4 animate-fade-in">
       <div className="flex justify-between items-start mb-3">
@@ -79,12 +96,33 @@ const TicketCard: React.FC<TicketCardProps> = ({
 
       {ticket.imageUrl && (
         <div className="mb-4">
-          <img 
-            src={ticket.imageUrl} 
-            alt="Ticket issue" 
-            className="rounded-md w-full h-48 object-cover cursor-pointer"
-            onClick={() => window.open(ticket.imageUrl, '_blank')}
-          />
+          <div className="flex items-center text-sm text-neutral-500 mb-2">
+            <ImageIcon size={16} className="mr-1" />
+            <span>Attached Image</span>
+          </div>
+          <div className="relative group">
+            <div className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden bg-neutral-100">
+              <img 
+                src={getImageUrl(ticket.imageUrl)} 
+                alt="Ticket issue" 
+                className="w-full h-full object-contain cursor-pointer transition-transform group-hover:scale-105"
+                onError={(e) => {
+                  // Fallback if image fails to load
+                  e.currentTarget.src = 'https://placehold.co/600x400?text=Image+Not+Available';
+                  e.currentTarget.classList.add('opacity-50');
+                }}
+              />
+            </div>
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-md flex items-center justify-center">
+              <button
+                onClick={() => window.open(getImageUrl(ticket.imageUrl), '_blank')}
+                className="opacity-0 group-hover:opacity-100 bg-white bg-opacity-90 text-neutral-800 px-3 py-1 rounded-md text-sm font-medium transition-opacity duration-200 flex items-center"
+              >
+                <Maximize2 size={14} className="mr-1" />
+                View Full Image
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -99,9 +137,9 @@ const TicketCard: React.FC<TicketCardProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center text-sm text-neutral-500 mb-3">
-        <MessageSquare size={16} className="mr-2" />
-        <span>Raised by: {ticket.studentName}</span>
+      <div className="flex items-center gap-2 text-sm text-gray-600">
+        <User className="w-4 h-4" />
+        <span>Raised by: {ticket.user?.name || 'Unknown'}</span>
       </div>
 
       {isAdmin && (

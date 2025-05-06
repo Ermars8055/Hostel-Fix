@@ -29,6 +29,7 @@ type AuthContextType = {
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  updateUserData: (userData: User) => void;
 };
 
 type RegisterData = {
@@ -169,6 +170,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUserData = (userData: User) => {
+    setUser(userData);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -178,7 +183,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         logout,
-        isAuthenticated
+        isAuthenticated,
+        updateUserData
       }}
     >
       {children}

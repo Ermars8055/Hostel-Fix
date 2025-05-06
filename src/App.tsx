@@ -6,6 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 // Public Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ImageUploadPage from './pages/ImageUploadPage';
 
 // Protected Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -61,6 +62,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/upload" element={<ImageUploadPage />} />
 
           {/* Admin Routes */}
           <Route

@@ -1,23 +1,111 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Save, Bell, Mail, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 import Header from '../../components/common/Header';
 import toast from 'react-hot-toast';
+import { API_URL } from '../../config/constants';
+
+interface SystemSettings {
+  emailNotifications: {
+    enabled: boolean;
+    adminEmail: string;
+  };
+  highPriorityAlerts: {
+    enabled: boolean;
+    threshold: number;
+  };
+  dailyDigest: {
+    enabled: boolean;
+    time: string;
+  };
+  autoResolve: {
+    enabled: boolean;
+    days: number;
+  };
+  maintenanceMode: {
+    enabled: boolean;
+    message: string;
+  };
+}
 
 const AdminSettings: React.FC = () => {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [highPriorityAlerts, setHighPriorityAlerts] = useState(true);
-  const [dailyDigest, setDailyDigest] = useState(false);
+  const [settings, setSettings] = useState<SystemSettings>({
+    emailNotifications: {
+      enabled: true,
+      adminEmail: 'admin@campus.edu'
+    },
+    highPriorityAlerts: {
+      enabled: true,
+      threshold: 5
+    },
+    dailyDigest: {
+      enabled: false,
+      time: '18:00'
+    },
+    autoResolve: {
+      enabled: false,
+      days: 7
+    },
+    maintenanceMode: {
+      enabled: false,
+      message: 'System is under maintenance'
+    }
+  });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   
-  const handleSaveSettings = () => {
-    setSaving(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setSaving(false);
-      toast.success('Settings saved successfully');
-    }, 1000);
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+  
+  const fetchSettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/admin/settings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setSettings(response.data);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      toast.error('Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
   };
+  
+  const handleSaveSettings = async () => {
+    try {
+      setSaving(true);
+      const token = localStorage.getItem('token');
+      
+      await axios.put(
+        `${API_URL}/api/admin/settings`,
+        settings,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success('Settings saved successfully');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-neutral-50">
+        <Header title="Settings" />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="w-12 h-12 border-t-4 border-primary-600 border-solid rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -36,8 +124,14 @@ const AdminSettings: React.FC = () => {
                       id="emailNotifications"
                       name="emailNotifications"
                       type="checkbox"
-                      checked={emailNotifications}
-                      onChange={() => setEmailNotifications(!emailNotifications)}
+                      checked={settings.emailNotifications.enabled}
+                      onChange={() => setSettings({
+                        ...settings,
+                        emailNotifications: {
+                          ...settings.emailNotifications,
+                          enabled: !settings.emailNotifications.enabled
+                        }
+                      })}
                       className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                     />
                   </div>
@@ -57,8 +151,14 @@ const AdminSettings: React.FC = () => {
                       id="highPriorityAlerts"
                       name="highPriorityAlerts"
                       type="checkbox"
-                      checked={highPriorityAlerts}
-                      onChange={() => setHighPriorityAlerts(!highPriorityAlerts)}
+                      checked={settings.highPriorityAlerts.enabled}
+                      onChange={() => setSettings({
+                        ...settings,
+                        highPriorityAlerts: {
+                          ...settings.highPriorityAlerts,
+                          enabled: !settings.highPriorityAlerts.enabled
+                        }
+                      })}
                       className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                     />
                   </div>
@@ -78,8 +178,14 @@ const AdminSettings: React.FC = () => {
                       id="dailyDigest"
                       name="dailyDigest"
                       type="checkbox"
-                      checked={dailyDigest}
-                      onChange={() => setDailyDigest(!dailyDigest)}
+                      checked={settings.dailyDigest.enabled}
+                      onChange={() => setSettings({
+                        ...settings,
+                        dailyDigest: {
+                          ...settings.dailyDigest,
+                          enabled: !settings.dailyDigest.enabled
+                        }
+                      })}
                       className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                     />
                   </div>
@@ -127,8 +233,14 @@ const AdminSettings: React.FC = () => {
                     type="email"
                     id="adminEmail"
                     className="form-input"
-                    placeholder="admin@example.com"
-                    defaultValue="admin@campus.edu"
+                    value={settings.emailNotifications.adminEmail}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      emailNotifications: {
+                        ...settings.emailNotifications,
+                        adminEmail: e.target.value
+                      }
+                    })}
                   />
                   <p className="text-xs text-neutral-500 mt-1">
                     This email will receive all system notifications
@@ -145,10 +257,39 @@ const AdminSettings: React.FC = () => {
                     className="form-input"
                     min="0"
                     max="30"
-                    defaultValue="7"
+                    value={settings.autoResolve.days}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      autoResolve: {
+                        ...settings.autoResolve,
+                        days: parseInt(e.target.value)
+                      }
+                    })}
                   />
                   <p className="text-xs text-neutral-500 mt-1">
                     Number of days after which resolved tickets are automatically archived
+                  </p>
+                </div>
+                
+                <div>
+                  <label htmlFor="maintenanceMessage" className="form-label">
+                    Maintenance Mode Message
+                  </label>
+                  <input
+                    type="text"
+                    id="maintenanceMessage"
+                    className="form-input"
+                    value={settings.maintenanceMode.message}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      maintenanceMode: {
+                        ...settings.maintenanceMode,
+                        message: e.target.value
+                      }
+                    })}
+                  />
+                  <p className="text-xs text-neutral-500 mt-1">
+                    Message to display when maintenance mode is enabled
                   </p>
                 </div>
               </div>

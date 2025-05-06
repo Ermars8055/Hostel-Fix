@@ -97,4 +97,38 @@ export const updateUserRole = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// @desc    Update current user profile
+// @route   PUT /api/users/profile
+// @access  Private
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, hostelName, roomNumber } = req.body;
+    
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Update only allowed fields
+    user.name = name;
+    user.hostelName = hostelName;
+    user.roomNumber = roomNumber;
+    
+    await user.save();
+    
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      hostelName: user.hostelName,
+      roomNumber: user.roomNumber
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 

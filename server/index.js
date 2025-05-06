@@ -3,13 +3,21 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
 import ticketRoutes from './routes/tickets.js';
 import userRoutes from './routes/users.js';
+import imageRoutes from './routes/imageRoutes.js';
+import adminRoutes from './routes/admin.js';
 
 // Load environment variables
 dotenv.config();
+
+// Get directory name
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Check for required environment variables
 const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI'];
@@ -32,6 +40,13 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path) => {
+    res.set('Access-Control-Allow-Origin', process.env.CLIENT_URL || 'http://localhost:5173');
+  }
+}));
+
 // Database connection
 const connectDB = async () => {
   try {
@@ -50,6 +65,8 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/images', imageRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handling
 app.use(errorHandler);

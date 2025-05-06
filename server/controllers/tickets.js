@@ -15,6 +15,7 @@ export const createTicket = async (req, res) => {
     const priority = req.body.priority || 'medium';
     const hostelName = req.body.hostelName;
     const roomNumber = req.body.roomNumber;
+    const image = req.file; // Get the uploaded file
 
     // Validate required fields
     if (!title || !description || !category) {
@@ -37,7 +38,8 @@ export const createTicket = async (req, res) => {
       user: req.user._id,
       status: 'open',
       hostelName,
-      roomNumber
+      roomNumber,
+      imageUrl: image ? `${process.env.SERVER_URL || 'http://localhost:1000'}/uploads/${image.filename}` : undefined // Store the full image URL if exists
     });
 
     console.log('Ticket created:', ticket);

@@ -38,6 +38,18 @@ const TicketForm: React.FC<TicketFormProps> = ({ onSubmit, loading }) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.match('image/jpeg|image/png|image/gif')) {
+        alert('Please select a valid image file (JPEG, PNG, or GIF)');
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size should be less than 5MB');
+        return;
+      }
+
       setValue('image', file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -174,7 +186,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onSubmit, loading }) => {
                 Select Image
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/gif"
                   className="hidden"
                   onChange={handleImageChange}
                 />

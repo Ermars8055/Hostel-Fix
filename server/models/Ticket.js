@@ -33,6 +33,10 @@ const ticketSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a room number']
   },
+  imageUrl: {
+    type: String,
+    default: null
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -65,6 +69,8 @@ const ticketSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
 });
 
 export const Ticket = mongoose.model('Ticket', ticketSchema); 

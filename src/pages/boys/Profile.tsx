@@ -19,7 +19,7 @@ type ProfileFormValues = {
 };
 
 const BoysProfile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUserData } = useAuth();
   const [saving, setSaving] = useState(false);
   const [editingPassword, setEditingPassword] = useState(false);
   
@@ -61,7 +61,7 @@ const BoysProfile: React.FC = () => {
         setEditingPassword(false);
         reset({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
-        await axios.put(
+        const response = await axios.put(
           `${API_URL}/api/users/profile`,
           {
             name: data.name,
@@ -71,6 +71,7 @@ const BoysProfile: React.FC = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
+        updateUserData(response.data);
         toast.success('Profile updated successfully');
       }
     } catch (error: any) {

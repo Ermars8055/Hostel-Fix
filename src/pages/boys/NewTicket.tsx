@@ -15,17 +15,25 @@ const BoysNewTicket: React.FC = () => {
     setLoading(true);
     
     try {
-      // Create the ticket data object
-      const ticketData = {
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        hostelName: data.hostelName,
-        roomNumber: data.roomNumber,
-        priority: 'medium' // Default priority
-      };
+      // Create form data for multipart/form-data upload
+      const formData = new FormData();
+      formData.append('title', data.title);
+      formData.append('description', data.description);
+      formData.append('category', data.category);
+      formData.append('hostelName', data.hostelName);
+      formData.append('roomNumber', data.roomNumber);
+      formData.append('priority', 'medium'); // Default priority
       
-      await api.post('/tickets', ticketData);
+      // Append image if exists
+      if (data.image) {
+        formData.append('image', data.image);
+      }
+      
+      await api.post('/tickets', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       
       toast.success('Ticket submitted successfully');
       navigate('/boys/tickets');

@@ -3,19 +3,82 @@ import axios from 'axios';
 import Header from '../../components/common/Header';
 import StatsChart from '../../components/dashboard/StatsChart';
 import { API_URL } from '../../config/constants';
+import toast from 'react-hot-toast';
+
+interface TicketStats {
+  total: number;
+  byStatus: {
+    [key: string]: number;
+  };
+  byHostel: {
+    _id: string;
+    count: number;
+  }[];
+  byCategory: {
+    _id: string;
+    count: number;
+  }[];
+  monthlyTrends: {
+    _id: {
+      year: number;
+      month: number;
+    };
+    submitted: number;
+    resolved: number;
+  }[];
+  resolutionTimes: {
+    _id: string;
+    avgResolutionTime: number;
+  }[];
+}
+
+interface SystemStats {
+  totalUsers: number;
+  totalTickets: number;
+  activeTickets: number;
+  resolvedTickets: number;
+  usersByRole: {
+    [key: string]: number;
+  };
+}
 
 const AdminStats: React.FC = () => {
   const [loading, setLoading] = useState(true);
+  const [ticketStats, setTicketStats] = useState<TicketStats>({
+    total: 0,
+    byStatus: {},
+    byHostel: [],
+    byCategory: [],
+    monthlyTrends: [],
+    resolutionTimes: []
+  });
+  const [systemStats, setSystemStats] = useState<SystemStats>({
+    totalUsers: 0,
+    totalTickets: 0,
+    activeTickets: 0,
+    resolvedTickets: 0,
+    usersByRole: {}
+  });
   
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const token = localStorage.getItem('token');
-        await axios.get(`${API_URL}/api/tickets/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        
+        const [ticketStatsRes, systemStatsRes] = await Promise.all([
+          axios.get(`${API_URL}/api/admin/tickets/stats`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API_URL}/api/admin/stats`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+        
+        setTicketStats(ticketStatsRes.data);
+        setSystemStats(systemStatsRes.data);
       } catch (error) {
         console.error('Error fetching stats:', error);
+        toast.error('Failed to load statistics');
       } finally {
         setLoading(false);
       }
@@ -24,61 +87,80 @@ const AdminStats: React.FC = () => {
     fetchStats();
   }, []);
 
-  // Mock data for demonstration purposes
+  // Prepare data for charts
   const hostelData = {
-    labels: ['Boys 1', 'Boys 2', 'Boys 3', 'Boys 4', 'Boys 5', 'Girls 1', 'Girls 2'],
+    labels: ticketStats.byHostel.map(h => h._id),
     datasets: [
       {
         label: 'Pending',
-        data: [5, 3, 7, 4, 2, 6, 3],
+        data: ticketStats.byHostel.map(h => 
+          ticketStats.byStatus.pending || 0
+        ),
         backgroundColor: 'rgba(245, 158, 11, 0.7)', // warning-500
       },
       {
         label: 'In Progress',
-        data: [3, 2, 4, 3, 1, 5, 2],
+        data: ticketStats.byHostel.map(h => 
+          ticketStats.byStatus['in-progress'] || 0
+        ),
         backgroundColor: 'rgba(59, 130, 246, 0.7)', // primary-500
       },
       {
         label: 'Resolved',
-        data: [8, 5, 10, 7, 4, 9, 6],
+        data: ticketStats.byHostel.map(h => 
+          ticketStats.byStatus.resolved || 0
+        ),
         backgroundColor: 'rgba(16, 185, 129, 0.7)', // accent-500
       },
     ],
   };
 
   const categoryData = {
-    labels: ['Plumbing', 'Electrical', 'Furniture', 'Cleanliness', 'Pests', 'Internet', 'Security'],
+    labels: ticketStats.byCategory.map(c => c._id),
     datasets: [
       {
         label: 'Number of Tickets',
-        data: [18, 15, 10, 12, 8, 20, 5],
+        data: ticketStats.byCategory.map(c => c.count),
         backgroundColor: 'rgba(124, 58, 237, 0.7)', // purple
       },
     ],
   };
 
+  // Process monthly trends data
   const monthlyData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     datasets: [
       {
         label: 'Tickets Submitted',
-        data: [12, 15, 18, 14, 22, 16, 17, 20, 24, 19, 14, 16],
+        data: Array(12).fill(0).map((_, i) => {
+          const monthData = ticketStats.monthlyTrends.find(
+            trend => trend._id.month === i + 1
+          );
+          return monthData ? monthData.submitted : 0;
+        }),
         backgroundColor: 'rgba(59, 130, 246, 0.7)', // primary-500
       },
       {
         label: 'Tickets Resolved',
-        data: [10, 12, 15, 11, 18, 15, 15, 17, 20, 16, 12, 14],
+        data: Array(12).fill(0).map((_, i) => {
+          const monthData = ticketStats.monthlyTrends.find(
+            trend => trend._id.month === i + 1
+          );
+          return monthData ? monthData.resolved : 0;
+        }),
         backgroundColor: 'rgba(16, 185, 129, 0.7)', // accent-500
       },
     ],
   };
 
   const resolutionTimeData = {
-    labels: ['Boys 1', 'Boys 2', 'Boys 3', 'Boys 4', 'Boys 5', 'Girls 1', 'Girls 2'],
+    labels: ticketStats.resolutionTimes.map(r => r._id),
     datasets: [
       {
         label: 'Average Resolution Time (Days)',
-        data: [2.4, 3.1, 2.7, 3.5, 2.9, 2.2, 2.8],
+        data: ticketStats.resolutionTimes.map(r => 
+          Math.round(r.avgResolutionTime * 10) / 10
+        ),
         backgroundColor: 'rgba(239, 68, 68, 0.7)', // error-500
       },
     ],
@@ -137,19 +219,26 @@ const AdminStats: React.FC = () => {
             <div>
               <h4 className="font-medium text-neutral-800 mb-2">Most Common Issues</h4>
               <ol className="list-decimal pl-5 space-y-1">
-                <li className="text-neutral-700">Internet connectivity (20 tickets)</li>
-                <li className="text-neutral-700">Plumbing issues (18 tickets)</li>
-                <li className="text-neutral-700">Electrical problems (15 tickets)</li>
-                <li className="text-neutral-700">Cleanliness concerns (12 tickets)</li>
+                {ticketStats.byCategory
+                  .sort((a, b) => b.count - a.count)
+                  .slice(0, 4)
+                  .map((category) => (
+                    <li key={category._id} className="text-neutral-700">
+                      {category._id} ({category.count} tickets)
+                    </li>
+                  ))}
               </ol>
             </div>
             <div>
-              <h4 className="font-medium text-neutral-800 mb-2">Fastest Resolution</h4>
+              <h4 className="font-medium text-neutral-800 mb-2">User Distribution</h4>
               <ol className="list-decimal pl-5 space-y-1">
-                <li className="text-neutral-700">Girls Hostel 1 (2.2 days average)</li>
-                <li className="text-neutral-700">Boys Hostel 1 (2.4 days average)</li>
-                <li className="text-neutral-700">Boys Hostel 3 (2.7 days average)</li>
-                <li className="text-neutral-700">Girls Hostel 2 (2.8 days average)</li>
+                {Object.entries(systemStats.usersByRole)
+                  .filter(([role]) => role !== 'admin')
+                  .map(([role, count]) => (
+                    <li key={role} className="text-neutral-700">
+                      {role.charAt(0).toUpperCase() + role.slice(1)}: {count} users
+                    </li>
+                  ))}
               </ol>
             </div>
           </div>

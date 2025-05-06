@@ -27,7 +27,6 @@ const Login: React.FC = () => {
     
     try {
       await login(data.email, data.password);
-      toast.success('Login successful');
       
       // Redirect based on role
       const user = JSON.parse(localStorage.getItem('user') || '{}');

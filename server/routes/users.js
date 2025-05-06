@@ -4,13 +4,17 @@ import {
   getUser,
   updateUser,
   deleteUser,
-  updateUserRole
+  updateUserRole,
+  updateProfile
 } from '../controllers/users.js';
 import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// All routes are protected and require admin role
+// Public routes (only require authentication)
+router.put('/profile', protect, updateProfile);
+
+// Admin routes
 router.use(protect, admin);
 
 router.route('/')
